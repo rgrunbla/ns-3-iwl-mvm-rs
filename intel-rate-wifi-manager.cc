@@ -539,7 +539,6 @@ class State {
 					(std::get<0>(adjacentIndexes) != INVALID_INDEX)) {
 				if (DEBUG) std::cout << "No data about lower rate\n";
 				action = RS_ACTION_DOWNSCALE;
-				goto out;
 			} else {
 				if (DEBUG) std::cout << "Maintain rate\n";
 			}
@@ -912,17 +911,17 @@ namespace ns3 {
 		if (DEBUG) std::cout << "DoInitialize\n";
 		NS_LOG_FUNCTION (this);
 
-		if (HasHtSupported ()) {
+		if (GetHtSupported ()) {
 			if (DEBUG) std::cout << "Ht supported!\n";
 			WifiModeList htMcsList = GetHtDeviceMcsList ();
 		}
 
-		if (HasVhtSupported ()) {
+		if (GetVhtSupported ()) {
 			if (DEBUG) std::cout << "Vht supported!\n";
 			WifiModeList vhtMcsList = GetVhtDeviceMcsList ();
 		}
 
-		if (!(HasVhtSupported() || HasHtSupported())) {
+		if (!(GetVhtSupported() || GetHtSupported())) {
 			if (DEBUG) std::cout << "Device does not support HT or VHT !\n";
 		}
 
@@ -985,16 +984,15 @@ namespace ns3 {
 	WifiTxVector IntelWifiManager::DoGetDataTxVector (WifiRemoteStation *st) {
 		NS_LOG_FUNCTION (this << st);
 		IntelWifiRemoteStation *station = (IntelWifiRemoteStation *) st;
-		std::tuple<ns3::WifiMode, int, int, int, int, int, bool, bool> parameters = station->state.getTxVector(HasHtSupported(), HasVhtSupported());
-		return WifiTxVector (std::get<0>(parameters), GetDefaultTxPowerLevel (), GetPreambleForTransmission (m_dataMode, GetAddress (st)),
+		std::tuple<ns3::WifiMode, int, int, int, int, int, bool, bool> parameters = station->state.getTxVector(GetHtSupported(), GetVhtSupported());
+		return WifiTxVector (std::get<0>(parameters), GetDefaultTxPowerLevel (), GetPreambleForTransmission (m_dataMode.GetModulationClass (), (std::get<1>(parameters)==400), false),
 				std::get<1>(parameters), std::get<2>(parameters), std::get<3>(parameters), std::get<4>(parameters), std::get<5>(parameters), std::get<6>(parameters), std::get<7>(parameters));
 	}
 
 	WifiTxVector IntelWifiManager::DoGetRtsTxVector (WifiRemoteStation *st) {
 		NS_LOG_FUNCTION (this << st);
-		return WifiTxVector (m_ctlMode, GetDefaultTxPowerLevel (), GetPreambleForTransmission (m_ctlMode, GetAddress (st)),
-				ConvertGuardIntervalToNanoSeconds (m_ctlMode, GetShortGuardInterval (st), NanoSeconds (GetGuardInterval (st))), 1, 1, 0,
-				GetChannelWidthForTransmission (m_ctlMode, GetChannelWidth (st)), GetAggregation (st), false);
+		std::cout << "WARNING: RTS is not yet supported !\n";
+		 return WifiTxVector (m_ctlMode, GetDefaultTxPowerLevel (), GetPreambleForTransmission (m_ctlMode.GetModulationClass (), GetShortPreambleEnabled (), UseGreenfieldForDestination (GetAddress (st))), ConvertGuardIntervalToNanoSeconds (m_ctlMode, GetShortGuardIntervalSupported (st), NanoSeconds (GetGuardInterval (st))), 1, 1, 0, GetChannelWidthForTransmission (m_ctlMode, GetChannelWidth (st)), GetAggregation (st), false);
 	}
 
 	bool IntelWifiManager::IsLowLatency (void) const {
